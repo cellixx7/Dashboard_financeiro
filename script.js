@@ -379,24 +379,74 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
+    // --- Adicionar ícones e Cores em Categorias ---
+    // 1. Lista de ícones sugeridos do Lucide
+const availableIcons = [
+    'utensils', 'car', 'palmtree', 'gauge', 'package', 
+    'shopping-cart', 'home', 'cpu', 'gamepad-2', 'dumbbell',
+    'tv', 'wrench', 'gift', 'plane', 'briefcase', 'heart',
+    'zap', 'music', 'book', 'camera'
+];
+
+// 2. Injetar ícones na grade ao carregar
+const iconGrid = document.getElementById('icon-grid');
+const selectedIconInput = document.getElementById('selected-icon');
+
+availableIcons.forEach(iconName => {
+    const div = document.createElement('div');
+    div.className = 'icon-option';
+    if(iconName === 'package') div.classList.add('selected');
+    div.innerHTML = `<i data-lucide="${iconName}"></i>`;
+    
+    div.onclick = () => {
+        document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        selectedIconInput.value = iconName;
+    };
+    iconGrid.appendChild(div);
+});
+
+// 3. Lógica para salvar a nova tag
+const tagForm = document.getElementById('tag-form');
+tagForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('tag-name').value;
+    const icon = selectedIconInput.value;
+
+    // Adiciona ao estado (supondo que você tenha um array de categorias)
+    if (!state.customCategories) state.customCategories = [];
+    state.customCategories.push({ name, icon });
+    
+    // Atualiza o localStorage e o dropdown de categorias no modal principal
+    saveData();
+    updateCategoryDropdown(); 
+    
+    tagForm.reset();
+    document.getElementById('tag-modal').close();
+    lucide.createIcons(); // Atualiza ícones novos
+});
+
     // --- Renderização da Tabela ---
     const renderTable = () => {
         tableBody.innerHTML = '';
         state.transactions.forEach((item, index) => {
             const tr = document.createElement('tr');
             const amountClass = item.type === 'saida' ? 'color: var(--danger);' : 'color: var(--success);';
-            const amountSign = item.type === 'saida' ? '-' : '';
+            const amountSign = item.type === 'saida' ? '-' : '+';
             
             const catObj = state.categories.find(c => c.name === item.category);
             const catColor = catObj ? catObj.color : '#636e72';
+            const DateObj = new Date(item.date);
+            const TimeObj = DateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             
-            const iconName = categoryIcons[item.category] || 'circle';
+            const iconName = categoryIcons[item.category] || 'package';
 
             tr.innerHTML = `
                 <td><i data-lucide="${iconName}" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; color: ${catColor}"></i>${item.description}</td>
                 <td><span class="badge" style="background-color: ${catColor}26; color: ${catColor}; border: 1px solid ${catColor}4D;">${item.category}</span></td>
                 <td style="${amountClass}">${amountSign} ${formatCurrency(item.amount)}</td>
                 <td>${item.type === 'entrada' ? 'Entrada' : 'Saída'}</td>
+                <td>${DateObj.toLocaleDateString('pt-BR')} - ${TimeObj}</td>
                 <td>
                     <button onclick="editTransaction(${index})" class="btn-edit" title="Editar"><i data-lucide="pencil"></i></button>
                     <button onclick="deleteTransaction(${index})" class="btn-delete" title="Excluir"><i data-lucide="trash-2"></i></button>
@@ -406,6 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         lucide.createIcons();
     };
+
+
 
     // --- Renderização de Tarefas ---
     const renderTasks = () => {
@@ -429,57 +481,118 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         lucide.createIcons();
     };
+// --- Gerenciamento de Categorias (Settings & Modals) ---
 
-    // --- Gerenciamento de Categorias (Settings) ---
-    const renderCategorySettings = () => {
-        const list = document.getElementById('settings-category-list');
-        list.innerHTML = '';
-        state.categories.forEach(cat => {
-            const li = document.createElement('li');
-            li.className = 'settings-category-item';
-            li.innerHTML = `
-                <div>
-                    <span class="color-preview" style="background-color: ${cat.color}"></span>
-                    <span>${cat.name}</span>
-                </div>
-                <button type="button" onclick="deleteCategory(${cat.id})" class="btn-delete" style="padding: 4px 8px;">
-                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+const renderCategorySettings = () => {
+    const list = document.getElementById('settings-category-list'); // Ou seu 'categories-list'
+    if (!list) return;
+    list.innerHTML = '';
+
+    state.categories.forEach(cat => {
+        const li = document.createElement('li');
+        li.className = 'settings-category-item category-item'; // Mantendo suas classes
+        li.innerHTML = `
+            <div class="category-info">
+                <i data-lucide="${cat.icon || 'package'}" style="color: ${cat.color}"></i>
+                <span>${cat.name}</span>
+            </div>
+            <div class="category-actions">
+                <button type="button" onclick="prepareEditCategory(${cat.id})" class="btn-mini-edit" title="Editar">
+                    <i data-lucide="pencil"></i>
                 </button>
-            `;
-            list.appendChild(li);
-        });
-        lucide.createIcons();
-    };
+                <button type="button" onclick="deleteCategory(${cat.id})" class="btn-delete btn-mini-delete" title="Excluir">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+    lucide.createIcons();
+};
 
-    const renderCategoryOptions = () => {
-        categoryInput.innerHTML = '';
+const renderCategoryOptions = () => {
+    // Atualiza todos os selects de categoria no site (transações, filtros, etc)
+    const categoryInputs = document.querySelectorAll('#category'); 
+    categoryInputs.forEach(input => {
+        input.innerHTML = '';
         state.categories.forEach(cat => {
             const option = document.createElement('option');
             option.value = cat.name;
             option.innerText = cat.name;
-            categoryInput.appendChild(option);
+            input.appendChild(option);
         });
-    };
+    });
+};
 
-    window.addNewCategory = () => {
-        const name = newCatNameInput.value;
-        const color = newCatColorInput.value;
-        if (name) {
-            state.categories.push({ id: Date.now(), name, color });
-            saveData();
-            newCatNameInput.value = '';
-            renderCategorySettings();
-            renderCategoryOptions();
+// Função para preparar o formulário para edição
+window.prepareEditCategory = (id) => {
+    const cat = state.categories.find(c => c.id === id);
+    if (!cat) return;
+
+    // Preenche os inputs com os dados atuais
+    document.getElementById('tag-name').value = cat.name;
+    document.getElementById('tag-color').value = cat.color;
+    document.getElementById('selected-icon').value = cat.icon || 'package';
+    document.getElementById('edit-tag-id').value = cat.id; // Campo oculto para controle
+
+    // Atualiza o visual do seletor de ícones
+    document.querySelectorAll('.icon-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.querySelector('i').dataset.lucide === (cat.icon || 'package'));
+    });
+
+    // Muda o texto do botão e título
+    document.getElementById('tag-submit-btn').innerText = "Salvar Alterações";
+    document.getElementById('tag-modal-title').innerText = "Editar Categoria";
+    
+    // Abre a lista caso esteja escondida
+    const list = document.getElementById('categories-list');
+    if(list && list.classList.contains('hidden')) toggleCategoriesList();
+};
+
+// Função unificada para Salvar (Nova ou Editada)
+window.handleCategorySubmit = (e) => {
+    if(e) e.preventDefault();
+
+    const id = document.getElementById('edit-tag-id').value;
+    const name = document.getElementById('tag-name').value;
+    const color = document.getElementById('tag-color').value;
+    const icon = document.getElementById('selected-icon').value;
+
+    if (!name) return;
+
+    if (id) {
+        // Modo Edição: Atualiza a categoria existente
+        const index = state.categories.findIndex(c => c.id == id);
+        if (index !== -1) {
+            state.categories[index] = { ...state.categories[index], name, color, icon };
         }
-    };
+    } else {
+        // Modo Criação: Adiciona nova
+        state.categories.push({ id: Date.now(), name, color, icon });
+    }
 
-    window.deleteCategory = (id) => {
+    saveData();
+    resetCategoryForm();
+    renderCategorySettings();
+    renderCategoryOptions();
+};
+
+window.resetCategoryForm = () => {
+    const form = document.getElementById('tag-form');
+    if(form) form.reset();
+    document.getElementById('edit-tag-id').value = '';
+    document.getElementById('tag-submit-btn').innerText = "Criar Categoria";
+    document.getElementById('tag-modal-title').innerText = "Gerenciar Categorias";
+};
+
+window.deleteCategory = (id) => {
+    if(confirm("Tem certeza que deseja excluir esta categoria?")) {
         state.categories = state.categories.filter(c => c.id !== id);
         saveData();
         renderCategorySettings();
         renderCategoryOptions();
-    };
-
+    }
+};// --- Gerenciamento de Categorias (Settings & Modals) ---
     // --- Event Listeners e Handlers ---
 
     // 1. Salvar Configurações (Salário)

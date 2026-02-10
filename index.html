@@ -36,19 +36,27 @@
 
                 <div class="cards-grid">
                     <div class="card card-in">
-                        <h2 class="card-title">Entradas</h2>
-                        <i data-lucide="trending-up"></i>
-                        <p class="card-value" id="entradas">R$ 50.000,00</p>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h2 class="card-title">Entradas</h2>
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                            <button class="btn-config" onclick="document.getElementById('settings-modal').showModal()">
+                                <i data-lucide="plus" class="plus-i"></i>
+                                <p class="tooltip-text">Editar Salário Fixo</p>
+                            </button>
+                        </div>
+                        <p class="card-value" id="entradas">R$ 0,00</p>
                     </div>
 
                     <div class="card card-out">
                         <h2 class="card-title">Saídas</h2>
-                        <p class="card-value" id="saidas">R$ 20.000,00</p>
+                        <p class="card-value" id="saidas">R$ 0,00</p>
                     </div>
 
                     <div class="card card-total">
                         <h2 class="card-title">Saldo Total</h2>
-                        <p class="card-value" id="saldo">R$ 30.000,00</p>
+                        <p class="card-value" id="saldo">R$ 0,00</p>
                     </div>
                 </div>
             </section>
@@ -87,7 +95,20 @@
 
             <section class="table-section">
                 <div class="card table-container">
-                    <h3>Últimas Transações</h3>
+                    <div class="table-header-main">
+                        <div class="title-with-info">
+                            <h3>Últimas Transações</h3>
+                            <div class="tooltip-wrapper">
+                                <i data-lucide="info" class="info-icon"></i>
+                                <span class="tooltip-text">Visualize, filtre e gerencie seu histórico de movimentações.</span>
+                            </div>
+                        </div>
+                    
+                        <button class="btn-add-tag" onclick="document.getElementById('tag-modal').showModal()">
+                            <i data-lucide="tags"></i> Adicionar Categorias
+                        </button>
+                    </div>
+
                     <table id="transaction-table">
                         <thead>
                             <tr>
@@ -95,6 +116,7 @@
                                 <th>Categoria</th>
                                 <th>Valor</th>
                                 <th>Tipo</th>
+                                <th>Data & Hora</th>
                                 <th>Ação</th>
                             </tr>
                         </thead>
@@ -157,43 +179,6 @@
                         <label for="salary">Salário Mensal Fixo</label>
                         <input type="number" id="salary" placeholder="Ex: 5000.00" step="0.01">
                     </div>
-                    
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-                    
-                    <h4>Gerenciar Categorias</h4>
-                    <ul id="settings-category-list" class="settings-category-list">
-                        <!-- Preenchido via JS -->
-                    </ul>
-                    <div class="add-category-row">
-                        <input type="text" id="new-cat-name" placeholder="Nova Categoria" style="flex: 1;">
-                        <input type="color" id="new-cat-color" value="#ffffff" style="width: 50px; padding: 2px;">
-                        <button type="button" onclick="addNewCategory()" class="btn-icon" style="background: var(--success); color: white; width: 40px;">+</button>
-                    </div>
-                    
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
-                    
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-                        <button type="button" id="export-json-btn" style="background-color: #6c5ce7; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <i data-lucide="save"></i> Salvar Backup (JSON)
-                        </button>
-                        
-                        <button type="button" onclick="document.getElementById('import-file').click()" style="background-color: #0984e3; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <i data-lucide="upload"></i> Importar Backup
-                        </button>
-                        <input type="file" id="import-file" accept=".json" style="display: none;">
-
-                        <button type="button" id="export-excel-btn" style="background-color: #00b894; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <i data-lucide="file-spreadsheet"></i> Gerar Planilha Excel
-                        </button>
-                    </div>
-                    
-                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-                    
-                    <h4>Integração com IA (Mesclar)</h4>
-                    <p style="font-size: 0.8rem; color: #b2bec3; margin-bottom: 5px;">Cole o JSON gerado pela IA abaixo para adicionar aos dados existentes.</p>
-                    <textarea id="ai-json-input" placeholder='Ex: { "transacoes": [...] }' style="width: 100%; height: 80px; background: #2d3436; color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 8px; resize: vertical; font-family: monospace;"></textarea>
-                    <button type="button" onclick="mergeAIJSON()" style="background-color: #6c5ce7; width: 100%; margin-bottom: 15px;">Mesclar Dados</button>
-
                     <button type="submit">Salvar Configurações</button>
                 </form>
             </div>
@@ -201,41 +186,43 @@
 
         <!-- Modal: Nova Transação -->
         <dialog id="transaction-modal" class="modal">
-            <div class="modal-content card">
-                <div class="modal-header">
-                    <h3>Nova Transação</h3>
-                    <button class="btn-close" onclick="document.getElementById('transaction-modal').close()">✖</button>
-                </div>
-                <form id="finance-form">
-                    <div class="input-group">
-                        <label for="desc">Descrição</label>
-                        <input type="text" id="desc" placeholder="Ex: Aluguel" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="amount">Valor</label>
-                        <input type="number" id="amount" placeholder="Ex: 150.00" step="0.01" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="type">Tipo</label>
-                        <select id="type">
-                            <option value="entrada">Entrada</option>
-                            <option value="saida">Saída</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="category">Categoria</label>
-                        <select id="category">
-                            <!-- Preenchido via JS -->
-                        </select>
-                    </div>
-
-                    <input type="hidden" id="edit-index">
-                    <button type="submit" id="submit-btn">Adicionar</button>
-                </form>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="transaction-title">Nova Transação</h3>
+            <button class="btn-close" onclick="document.getElementById('transaction-modal').close()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form id="finance-form">
+            <div class="input-group">
+                <label for="desc">Descrição</label>
+                <input type="text" id="desc" placeholder="Ex: Aluguel ou Freelance" required>
             </div>
+        
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="amount">Valor (R$)</label>
+                    <input type="number" id="amount" placeholder="0,00" step="0.01" required>
+                </div>
+        
+                <div class="input-group">
+                    <label for="type">Tipo</label>
+                    <select id="type">
+                        <option value="saida" selected>Saída</option>
+                        <option value="entrada">Entrada</option>
+                    </select>
+                </div>
+        
+            <div class="input-group">
+                <label for="category">Categoria</label>
+                <select id="category">
+                </select>
+            </div>
+        
+            <input type="hidden" id="edit-index">
+            <button type="submit" id="submit-btn" class="btn-primary">Adicionar Transação</button>
+        </form>
+        </div>
         </dialog>
 
         <!-- Modal: Nova Meta -->
@@ -291,6 +278,55 @@
                 </form>
             </div>
         </dialog>
+        
+       <dialog id="tag-modal" class="modal">
+    <div class="modal-content card">
+        <div class="modal-header">
+            <h3 id="tag-modal-title">Gerenciar Categorias</h3>
+            <button class="btn-close" onclick="closeTagModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <form id="tag-form">
+            <div class="input-group">
+                <button type="button" class="btn-view-tags" onclick="toggleCategoriesList()">
+                    <i data-lucide="tags"></i> Categorias Existentes
+                    <i data-lucide="chevron-down" id="chevron-icon"></i>
+                </button>
+                <div id="categories-list" class="categories-list hidden">
+                    </div>
+            </div>
+
+            <hr class="separator">
+
+            <div class="input-group">
+                <label for="tag-name">Nome da Categoria</label>
+                <input type="text" id="tag-name" placeholder="Ex: Manutenção Lancer" required>
+            </div>
+
+            <div class="input-group">
+                <label>Escolha um Ícone</label>
+                <div class="icon-selector" id="icon-grid"></div>
+                <input type="hidden" id="selected-icon" value="package">
+            </div>
+
+            <div class="input-group">
+                <label for="tag-color">Cor da Categoria</label>
+                <input type="color" id="tag-color" value="#0984e3" class="color-picker">
+            </div>
+
+            <input type="hidden" id="edit-tag-id" value="">
+            
+            <div class="form-actions">
+                <button type="submit" id="tag-submit-btn" class="btn-primary">Criar Categoria</button>
+                <button type="button" id="cancel-edit-tag" class="btn-cancel hidden" onclick="resetTagForm()">Cancelar Edição</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+
 
        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
