@@ -1,0 +1,303 @@
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>· Dashboard Financeiro</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="icon" type="image/svg+xml" href="landmark.png">
+        <link rel="stylesheet" href="styles.css" />
+        <script src="https://unpkg.com/lucide@latest"></script> 
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="navbar-brand">Dashboard</div>
+            <ul class="navbar-menu">
+                <li><a href="#">Início</a></li>
+                <li><a href="#ai-insights">Insights IA</a></li>
+                </ul>
+                <div class="navbar-actions">
+                    <!-- Botão de Configuração Ajustado -->
+                    <button class="btn-icon" onclick="document.getElementById('settings-modal').showModal()">
+                        <i data-lucide="settings"></i> 
+                    </button>
+                </div>
+        </nav>
+
+        <!-- Barra de Meta Fixada -->
+        <div id="pinned-goal-bar" class="pinned-goal-bar" style="display: none;">
+        </div>
+
+        <main class="dashboard-container container">
+            <section class="overview-section">
+
+                <div class="cards-grid">
+                    <div class="card card-in">
+                        <h2 class="card-title">Entradas</h2>
+                        <i data-lucide="trending-up"></i>
+                        <p class="card-value" id="entradas">R$ 50.000,00</p>
+                    </div>
+
+                    <div class="card card-out">
+                        <h2 class="card-title">Saídas</h2>
+                        <p class="card-value" id="saidas">R$ 20.000,00</p>
+                    </div>
+
+                    <div class="card card-total">
+                        <h2 class="card-title">Saldo Total</h2>
+                        <p class="card-value" id="saldo">R$ 30.000,00</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Botões de Ação Organizados -->
+            <section class="actions-section">
+                <button class="btn-action" onclick="document.getElementById('transaction-modal').showModal()">
+                    <i data-lucide="plus-circle"></i> Nova Transação
+                </button>
+                <button class="btn-action" onclick="openGoalsManager()">
+                    <i data-lucide="target"></i> Objetivos
+                </button>
+            </section>
+
+            <section class="grid-layout">
+                <div class="card chart-container">
+                    <h3>Distribuição de Gastos</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Painel de Tarefas -->
+                <div class="card tasks-container">
+                    <div class="card-header">
+                        <h3>Tarefas</h3>
+                        <button class="btn-icon" onclick="document.getElementById('task-modal').showModal()" title="Nova Tarefa">
+                            <i data-lucide="plus"></i>
+                        </button>
+                    </div>
+                    <ul id="task-list" class="task-list">
+                        <!-- Preenchido via JS -->
+                    </ul>
+                </div>
+            </section>
+
+            <section class="table-section">
+                <div class="card table-container">
+                    <h3>Últimas Transações</h3>
+                    <table id="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>Tipo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+    <!-- Seção de Insights da IA -->
+    <section id="ai-insights" class="ai-insights-container">
+        <div class="card ai-card">
+            <div class="card-header">
+                <h3 class="card-title" style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Ícone Sparkles do Lucide -->
+                    <i data-lucide="sparkles" style="color: #fdcb6e;"></i> 
+                    Análise Inteligente
+                </h3>
+                <!-- Botão opcional para disparar a análise futuramente -->
+                <button id="btn-analyze" class="btn-header" style="background-color: #6c5ce7;">
+                    <i data-lucide="brain-circuit"></i> Gerar Insights
+                </button>
+            </div>
+            
+            <div class="ai-grid">
+                <!-- Espaço para o Relatório de Texto -->
+                <div class="ai-report" id="ai-report-content">
+                    <p style="color: #b2bec3; font-style: italic;">
+                        Aguardando dados da Inteligência Artificial...
+                    </p>
+                </div>
+                
+                <!-- Espaço para o Gráfico da IA -->
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="aiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+        </main>
+
+
+
+        <!-- Modal: Configurações Iniciais -->
+        <dialog id="settings-modal" class="modal">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3>Configurações</h3>
+                    <button class="btn-close" onclick="document.getElementById('settings-modal').close()">✖</button>
+                </div>
+                <form id="settings-form">
+                    <div class="input-group">
+                        <label for="salary">Salário Mensal Fixo</label>
+                        <input type="number" id="salary" placeholder="Ex: 5000.00" step="0.01">
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+                    
+                    <h4>Gerenciar Categorias</h4>
+                    <ul id="settings-category-list" class="settings-category-list">
+                        <!-- Preenchido via JS -->
+                    </ul>
+                    <div class="add-category-row">
+                        <input type="text" id="new-cat-name" placeholder="Nova Categoria" style="flex: 1;">
+                        <input type="color" id="new-cat-color" value="#ffffff" style="width: 50px; padding: 2px;">
+                        <button type="button" onclick="addNewCategory()" class="btn-icon" style="background: var(--success); color: white; width: 40px;">+</button>
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+                    
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                        <button type="button" id="export-json-btn" style="background-color: #6c5ce7; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="save"></i> Salvar Backup (JSON)
+                        </button>
+                        
+                        <button type="button" onclick="document.getElementById('import-file').click()" style="background-color: #0984e3; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="upload"></i> Importar Backup
+                        </button>
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+
+                        <button type="button" id="export-excel-btn" style="background-color: #00b894; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="file-spreadsheet"></i> Gerar Planilha Excel
+                        </button>
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+                    
+                    <h4>Integração com IA (Mesclar)</h4>
+                    <p style="font-size: 0.8rem; color: #b2bec3; margin-bottom: 5px;">Cole o JSON gerado pela IA abaixo para adicionar aos dados existentes.</p>
+                    <textarea id="ai-json-input" placeholder='Ex: { "transacoes": [...] }' style="width: 100%; height: 80px; background: #2d3436; color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 8px; resize: vertical; font-family: monospace;"></textarea>
+                    <button type="button" onclick="mergeAIJSON()" style="background-color: #6c5ce7; width: 100%; margin-bottom: 15px;">Mesclar Dados</button>
+
+                    <button type="submit">Salvar Configurações</button>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Modal: Nova Transação -->
+        <dialog id="transaction-modal" class="modal">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3>Nova Transação</h3>
+                    <button class="btn-close" onclick="document.getElementById('transaction-modal').close()">✖</button>
+                </div>
+                <form id="finance-form">
+                    <div class="input-group">
+                        <label for="desc">Descrição</label>
+                        <input type="text" id="desc" placeholder="Ex: Aluguel" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="amount">Valor</label>
+                        <input type="number" id="amount" placeholder="Ex: 150.00" step="0.01" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="type">Tipo</label>
+                        <select id="type">
+                            <option value="entrada">Entrada</option>
+                            <option value="saida">Saída</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="category">Categoria</label>
+                        <select id="category">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="edit-index">
+                    <button type="submit" id="submit-btn">Adicionar</button>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Modal: Nova Meta -->
+        <dialog id="goal-modal" class="modal">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3>Criar Nova Meta</h3>
+                    <button class="btn-close" onclick="document.getElementById('goal-modal').close()">✖</button>
+                </div>
+                <form id="goal-form">
+                    <div class="input-group">
+                        <label for="goal-name">Nome da Meta</label>
+                        <input type="text" id="goal-name" placeholder="Ex: Viagem Japão" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="goal-target">Valor Alvo</label>
+                        <input type="number" id="goal-target" placeholder="Ex: 15000.00" step="0.01" required>
+                    </div>
+                    <button type="submit">Criar Meta</button>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Modal: Gerenciar Metas (Lista) -->
+        <dialog id="goals-manager-modal" class="modal">
+            <div class="modal-content card" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>Meus Objetivos</h3>
+                    <button class="btn-close" onclick="document.getElementById('goals-manager-modal').close()">✖</button>
+                </div>
+                <div id="goals-list-container" class="goals-list-container">
+                    <!-- Lista preenchida via JS -->
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn-create-goal" onclick="document.getElementById('goal-modal').showModal()">+ Nova Meta</button>
+                </div>
+            </div>
+        </dialog>
+
+        <!-- Modal: Nova Tarefa -->
+        <dialog id="task-modal" class="modal">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3>Nova Tarefa</h3>
+                    <button class="btn-close" onclick="document.getElementById('task-modal').close()">✖</button>
+                </div>
+                <form id="task-form">
+                    <div class="input-group">
+                        <label for="task-desc">Descrição da Tarefa</label>
+                        <input type="text" id="task-desc" placeholder="Ex: Pagar conta de luz" required>
+                    </div>
+                    <button type="submit">Adicionar Tarefa</button>
+                </form>
+            </div>
+        </dialog>
+
+       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Inicializa os ícones do Lucide assim que a página carrega
+        lucide.createIcons();
+    </script>
+    </body>
+
+    </html>
