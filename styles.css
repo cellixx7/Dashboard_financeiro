@@ -614,12 +614,6 @@ dialog::backdrop {
     background: rgba(0, 184, 148, 0.05);
 }
 
-.btn-config:hover .tooltip-text {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-}
-
 /* Alinhamento geral de ícones em botões */
 .btn-header, .btn-icon, .btn-edit, .btn-delete, .btn-config {
     display: inline-flex;
