@@ -44,10 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskModal = document.getElementById('task-modal');
     
     let myChart = null;
-    let aiChartInstance = null; // Instância do gráfico da IA
 
     const API_URL = 'http://localhost:8000';
-    const AI_API_URL = 'http://localhost:8001'; // Porta do ai_analyzer.py
 
     // --- Gestão de Estado (IA Ready) ---
     let state = {
@@ -134,15 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCategoryOptions();
         renderTasks();
         updateChart(totals);
-
-        // Log para IA
-        console.log('Relatório para IA:', JSON.stringify({
-            timestamp: new Date().toISOString(),
-            resumo: totals,
-            transacoes: state.transactions,
-            metas: state.goals,
-            tarefas: state.tasks
-        }, null, 2));
     };
 
     // --- Gráfico Inteligente (Gastos vs. Economia) ---
@@ -205,117 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
-
-    // --- Integração com IA (Consultoria) ---
-
-    const btnAnalyze = document.getElementById('btn-analyze');
-
-    async function askAiAnalysis() {
-        if (!btnAnalyze) return;
-
-        // 1. Estado de Loading
-        const originalContent = btnAnalyze.innerHTML;
-        btnAnalyze.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Analisando...';
-        btnAnalyze.disabled = true;
-        lucide.createIcons();
-
-        try {
-            // 2. Envia dados para o Python (ai_analyzer.py)
-            const response = await fetch(`${AI_API_URL}/analyze`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    salary: state.salary,
-                    transactions: state.transactions,
-                    goals: state.goals
-                })
-            });
-
-            if (!response.ok) throw new Error('Falha na comunicação com a IA');
-
-            const data = await response.json();
-
-            // 3. Preenche o Relatório de Texto
-            const reportContainer = document.getElementById('ai-report-content');
-            
-            // Tenta mapear chaves comuns que a IA pode retornar
-            const summary = data.resumo || data.summary || data.a || "Resumo não disponível.";
-            const recommendation = data.recomendacao || data.recommendation || data.b || "Sem recomendação.";
-            
-            reportContainer.innerHTML = `
-                <h4 style="color: #fdcb6e; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><i data-lucide="activity" style="width:16px;"></i> Resumo Financeiro</h4>
-                <p style="margin-bottom: 15px; color: #dfe6e9;">${summary}</p>
-                
-                <h4 style="color: #00b894; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><i data-lucide="piggy-bank" style="width:16px;"></i> Recomendação Estratégica</h4>
-                <p style="color: #dfe6e9;">${recommendation}</p>
-            `;
-            lucide.createIcons();
-
-            // 4. Renderiza o Gráfico da IA
-            const chartData = data.grafico || data.chart_data || data.c || [];
-            renderAiChart(chartData);
-
-        } catch (error) {
-            console.error(error);
-            document.getElementById('ai-report-content').innerHTML = `<p style="color: var(--danger);">Erro ao conectar com a IA.</p>`;
-        } finally {
-            // 5. Restaura o botão
-            btnAnalyze.innerHTML = originalContent;
-            btnAnalyze.disabled = false;
-            lucide.createIcons();
-        }
-    }
-
-    function renderAiChart(dataPoints) {
-        const ctx = document.getElementById('aiChart').getContext('2d');
-        
-        if (aiChartInstance) {
-            aiChartInstance.destroy();
-        }
-
-        // Cria labels genéricas (Mês 1, Mês 2...) baseadas na quantidade de dados
-        const labels = dataPoints.map((_, i) => `Mês ${i + 1}`);
-
-        aiChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Projeção de Saldo (IA)',
-                    data: dataPoints,
-                    borderColor: '#6c5ce7',
-                    backgroundColor: 'rgba(108, 92, 231, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4, // Curva suave
-                    pointBackgroundColor: '#00b894'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#b2bec3' }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                    }
-                },
-                scales: {
-                    y: {
-                        grid: { color: '#2d3436' },
-                        ticks: { color: '#b2bec3' }
-                    },
-                    x: {
-                        grid: { color: '#2d3436' },
-                        ticks: { color: '#b2bec3' }
-                    }
-                }
-            }
-        });
-    }
 
     // --- Renderização de Metas (Modal e Barra Fixa) ---
     
@@ -388,43 +266,47 @@ const availableIcons = [
     'zap', 'music', 'book', 'camera'
 ];
 
-// 2. Injetar ícones na grade ao carregar
+// 2. Injetar ícones na grade ao carregar (se existir no DOM)
 const iconGrid = document.getElementById('icon-grid');
 const selectedIconInput = document.getElementById('selected-icon');
 
-availableIcons.forEach(iconName => {
-    const div = document.createElement('div');
-    div.className = 'icon-option';
-    if(iconName === 'package') div.classList.add('selected');
-    div.innerHTML = `<i data-lucide="${iconName}"></i>`;
-    
-    div.onclick = () => {
-        document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        selectedIconInput.value = iconName;
-    };
-    iconGrid.appendChild(div);
-});
+if (iconGrid && selectedIconInput) {
+    availableIcons.forEach(iconName => {
+        const div = document.createElement('div');
+        div.className = 'icon-option';
+        if(iconName === 'package') div.classList.add('selected');
+        div.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        
+        div.onclick = () => {
+            document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            selectedIconInput.value = iconName;
+        };
+        iconGrid.appendChild(div);
+    });
+}
 
-// 3. Lógica para salvar a nova tag
+// 3. Lógica para salvar a nova tag (formulário antigo, se existir)
 const tagForm = document.getElementById('tag-form');
-tagForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('tag-name').value;
-    const icon = selectedIconInput.value;
+if (tagForm) {
+    tagForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('tag-name').value;
+        const icon = selectedIconInput ? selectedIconInput.value : 'package';
 
-    // Adiciona ao estado (supondo que você tenha um array de categorias)
-    if (!state.customCategories) state.customCategories = [];
-    state.customCategories.push({ name, icon });
-    
-    // Atualiza o localStorage e o dropdown de categorias no modal principal
-    saveData();
-    updateCategoryDropdown(); 
-    
-    tagForm.reset();
-    document.getElementById('tag-modal').close();
-    lucide.createIcons(); // Atualiza ícones novos
-});
+        if (!state.customCategories) state.customCategories = [];
+        state.customCategories.push({ name, icon });
+        
+        saveData();
+        updateCategoryDropdown(); 
+        
+        tagForm.reset();
+        document.getElementById('tag-modal').close();
+        const tagModal = document.getElementById('tag-modal');
+        if (tagModal) tagModal.close();
+        lucide.createIcons();
+    });
+}
 
     // --- Renderização da Tabela ---
     const renderTable = () => {
@@ -438,8 +320,7 @@ tagForm.addEventListener('submit', (e) => {
             const catColor = catObj ? catObj.color : '#636e72';
             const DateObj = new Date(item.date);
             const TimeObj = DateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            
-            const iconName = categoryIcons[item.category] || 'package';
+            const iconName = (catObj && catObj.icon) ? catObj.icon : 'tag';
 
             tr.innerHTML = `
                 <td><i data-lucide="${iconName}" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; color: ${catColor}"></i>${item.description}</td>
@@ -492,11 +373,11 @@ const renderCategorySettings = () => {
         const li = document.createElement('li');
         li.className = 'settings-category-item category-item'; // Mantendo suas classes
         li.innerHTML = `
-            <div class="category-info">
-                <i data-lucide="${cat.icon || 'package'}" style="color: ${cat.color}"></i>
+            <div class="category-info" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px;">
+                <i data-lucide="${cat.icon || 'package'}" style="color: ${cat.color}; background: #2d3436; border-radius: 50%; padding: 4px;"></i>
                 <span>${cat.name}</span>
             </div>
-            <div class="category-actions">
+            <div class="category-actions" style="display: flex; gap: 6px; border-top: 1px solid #2d3436; padding-top: 6px; background: #2d3436; border-radius: 0 0 6px 6px;">
                 <button type="button" onclick="prepareEditCategory(${cat.id})" class="btn-mini-edit" title="Editar">
                     <i data-lucide="pencil"></i>
                 </button>
@@ -522,6 +403,138 @@ const renderCategoryOptions = () => {
             input.appendChild(option);
         });
     });
+};
+
+// --- Navegação por Abas ---
+window.switchTab = (tabName) => {
+    const dashboardView = document.getElementById('dashboard-view');
+    const categoriesView = document.getElementById('categories-view');
+
+    if (tabName === 'dashboard') {
+        if (dashboardView) dashboardView.style.display = 'block';
+        if (categoriesView) categoriesView.style.display = 'none';
+    } else if (tabName === 'categories') {
+        if (dashboardView) dashboardView.style.display = 'none';
+        if (categoriesView) categoriesView.style.display = 'block';
+        renderCategoryManager(); // Renderiza ao abrir a aba
+    }
+    
+    lucide.createIcons();
+};
+
+// --- Gerenciador de Categorias (Modal de Tags) ---
+const toggleAddSection = () => {
+    const section = document.getElementById('add-tag-section');
+    const addBtn = document.getElementById('add-tag-btn');
+    if (section) section.classList.toggle('hidden');
+    if (addBtn) addBtn.classList.toggle('hidden');
+    
+    if (section && section.classList.contains('hidden')) {
+        resetTagForm();
+    }
+};
+window.toggleAddSection = toggleAddSection;
+
+const renderCategoryManager = () => {
+    const container = document.getElementById('tags-list-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    state.categories.forEach(cat => {
+        const div = document.createElement('div');
+        div.className = 'tag-item-admin';
+        // Estilização inline para garantir o visual de card no grid
+        div.style.cssText = `display: flex; flex-direction: column; justify-content: space-between; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.05);`;
+        
+        div.innerHTML = `
+            <div class="tag-info-admin" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: ${cat.color}10; padding: 8px; border-radius: 6px;">
+                <div style="background: ${cat.color}20; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="${cat.icon || 'tag'}" style="width: 20px; height: 20px; color: ${cat.color}"></i>
+                </div>
+                <span style="font-weight: 500; color: #ffffff;">${cat.name}</span>
+            </div>
+            <div class="tag-actions-admin" style="display: flex; justify-content: flex-end; gap: 6px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                <button class="btn-small-icon btn-edit-cat" onclick="prepareEditTag(${cat.id})" title="Editar" style="color: #ffd153; transition: color 0.2s;" onmouseover="this.style.color='#fdcb6e';" onmouseout="this.style.color='#ffd153';">
+                    <i data-lucide="pencil"></i>
+                </button>
+                <button class="btn-small-icon btn-trash-cat" onclick="deleteCategory(${cat.id})" title="Excluir" style="color: var(--danger); transition: color 0.2s;" onmouseover="this.style.color='#ff7675';" onmouseout="this.style.color='var(--danger)'; ">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    lucide.createIcons();
+};
+
+const handleSaveCategory = () => {
+    const name = document.getElementById('new-tag-name')?.value?.trim();
+    const icon = document.getElementById('new-tag-icon')?.value?.trim() || 'package';
+    const color = document.getElementById('new-tag-color')?.value || '#6c5ce7';
+    const editId = document.getElementById('edit-tag-id')?.value;
+
+    if (!name) return alert('Dê um nome à categoria!');
+
+    if (editId) {
+        const index = state.categories.findIndex(c => c.id == editId);
+        if (index !== -1) {
+            state.categories[index] = { ...state.categories[index], name, icon, color };
+        }
+    } else {
+        state.categories.push({ id: Date.now(), name, icon, color });
+    }
+
+    saveData();
+    document.getElementById('category-form-modal').close();
+    resetTagForm();
+    renderCategoryManager();
+    renderCategoryOptions();
+};
+window.handleSaveCategory = handleSaveCategory;
+
+window.prepareEditTag = (id) => {
+    const cat = state.categories.find(c => c.id == id);
+    if (!cat) return;
+
+    document.getElementById('new-tag-name').value = cat.name;
+    document.getElementById('new-tag-icon').value = cat.icon || 'package';
+    document.getElementById('new-tag-color').value = cat.color;
+    document.getElementById('edit-tag-id').value = cat.id;
+    document.getElementById('form-tag-title').innerText = 'Editar Categoria';
+    
+    // Atualiza visual dos ícones
+    document.querySelectorAll('.icon-opt').forEach(btn => {
+        if (btn.dataset.icon === (cat.icon || 'package')) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+
+    document.getElementById('category-form-modal').showModal();
+};
+
+const resetTagForm = () => {
+    const nameInput = document.getElementById('new-tag-name');
+    const iconInput = document.getElementById('new-tag-icon');
+    const colorInput = document.getElementById('new-tag-color');
+    const editInput = document.getElementById('edit-tag-id');
+    const title = document.getElementById('form-tag-title');
+
+    if (nameInput) nameInput.value = '';
+    if (iconInput) iconInput.value = '';
+    if (colorInput) colorInput.value = '#6c5ce7';
+    if (editInput) editInput.value = '';
+    if (title) title.innerText = 'Nova Categoria';
+    
+    // Limpa seleção visual dos ícones
+    document.querySelectorAll('.icon-opt').forEach(btn => btn.classList.remove('selected'));
+};
+
+window.openTagModal = () => {
+    renderCategoryManager();
+    document.getElementById('tag-modal').showModal();
+    window.switchTab('categories');
 };
 
 // Função para preparar o formulário para edição
@@ -586,11 +599,21 @@ window.resetCategoryForm = () => {
 };
 
 window.deleteCategory = (id) => {
-    if(confirm("Tem certeza que deseja excluir esta categoria?")) {
+    const category = state.categories.find(c => c.id === id);
+    if (!category) return;
+
+    const isUsed = state.transactions.some(t => t.category === category.name);
+    if (isUsed) {
+        alert(`A categoria "${category.name}" não pode ser excluída pois está sendo usada em transações.`);
+        return;
+    }
+
+    if(confirm(`Tem certeza que deseja excluir a categoria "${category.name}"?`)) {
         state.categories = state.categories.filter(c => c.id !== id);
         saveData();
         renderCategorySettings();
         renderCategoryOptions();
+        renderCategoryManager();
     }
 };// --- Gerenciamento de Categorias (Settings & Modals) ---
     // --- Event Listeners e Handlers ---
@@ -677,12 +700,6 @@ window.deleteCategory = (id) => {
         exportJsonBtn.addEventListener('click', () => {
             const totals = calculateTotals();
             const report = {
-                instrucoes_ia: "CONTEXTO: Este arquivo JSON é um backup do meu Dashboard Financeiro. " +
-                    "COMO USAR: 1. Analise 'transacoes' e 'metas' para me dar insights. " +
-                    "2. GERAÇÃO DE DADOS: Se eu pedir algo como 'Incluir gasolina e faculdade no valor', " +
-                    "gere um JSON de resposta contendo apenas as novas entradas na chave 'transacoes' (com id, description, amount, type='saida', category='Outros' ou a mais adequada, e date), " +
-                    "para que eu possa importar esse trecho no meu sistema." + 
-                    "Sempre gere o arquivo JSON para download.",
                 timestamp: new Date().toISOString(),
                 resumo: totals,
                 transacoes: state.transactions,
@@ -849,9 +866,6 @@ window.deleteCategory = (id) => {
         }
     }
 
-    // Event Listener para o botão da IA
-    if (btnAnalyze) btnAnalyze.addEventListener('click', askAiAnalysis);
-
     // --- Navegação Suave (JS) ---
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -872,4 +886,17 @@ window.deleteCategory = (id) => {
     // --- Inicialização ---
     salaryInput.value = state.salary || '';
     updateDashboard(); // Carrega do localStorage
+
+    // Inicializa seletor de ícones (Novo Modal)
+    const iconSelector = document.getElementById('icon-selector');
+    if (iconSelector) {
+        iconSelector.addEventListener('click', (e) => {
+            const btn = e.target.closest('.icon-opt');
+            if (!btn) return;
+            
+            document.querySelectorAll('.icon-opt').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('new-tag-icon').value = btn.dataset.icon;
+        });
+    }
 });
