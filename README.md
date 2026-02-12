@@ -58,3 +58,6 @@ As cores e temas são gerenciados através de variáveis CSS na raiz do arquivo 
 - `styles.css`: Contém todas as regras de estilo, incluindo reset, componentes (navbar, cards, tabelas), animações e utilitários.
 - `index.html`: Estrutura do dashboard (presumido).
 - `script.js`: Lógica da aplicação (presumido).
+
+## 📺 Vídeo do Site (Versão 1.1 - Atualizando)
+- [Clique aqui](https://drive.google.com/file/d/1hbglOc_hKPXDBd--LrI5mKR6v0Ec732b/view?usp=sharing)
